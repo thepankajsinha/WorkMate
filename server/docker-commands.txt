@@ -1,0 +1,17 @@
+1. show running container - docker ps
+
+2. Show all containers (running + stopped) - docker ps -a
+
+3. build backend image -> docker build -t WorkMate . 
+here WorkMate is image name
+
+4. Run image in container -
+docker run -d -p 5000:5000 --name job-backend --env-file .env WorkMate
+
+here job-backend is container name and WorkMate is image name
+
+5. stop container - docker stop job-backend
+
+6. remove container - docker stop job-backend
+
+7. restart container - docker restart job-backend
