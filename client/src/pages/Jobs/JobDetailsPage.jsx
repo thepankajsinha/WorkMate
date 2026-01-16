@@ -171,7 +171,7 @@ const JobDetailsPage = () => {
               <div className="flex items-start gap-4">
                 {/* ✅ Company Logo Click */}
                 <Link
-                  to={companyId ? `/company/${companyId}` : "#"}
+                  to={companyId ? `/employer/public/${companyId}` : "#"}
                   className="w-16 h-16 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm block hover:scale-[1.02] transition"
                 >
                   <img

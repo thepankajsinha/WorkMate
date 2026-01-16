@@ -8,6 +8,7 @@ const JobSeekerContext = createContext();
 export const JobSeekerProvider = ({ children }) => {
   const [jobSeeker, setJobSeeker] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [publicJobSeeker, setPublicJobSeeker] = useState(null); 
 
   const navigate = useNavigate();
 
@@ -22,6 +23,25 @@ export const JobSeekerProvider = ({ children }) => {
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to fetch profile");
       setJobSeeker(null);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPublicJobSeekerProfile = async (jobSeekerId) => {
+    try {
+      setLoading(true);
+
+      const res = await api.get(`/api/jobseekers/public/${jobSeekerId}`);
+      setPublicJobSeeker(res.data.jobSeeker);
+
+      return res.data;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to fetch public profile"
+      );
+      setPublicJobSeeker(null);
       throw error;
     } finally {
       setLoading(false);
@@ -81,6 +101,8 @@ export const JobSeekerProvider = ({ children }) => {
         fetchJobSeekerProfile,
         registerJobSeekerProfile,
         updateJobSeekerProfile,
+        publicJobSeeker,
+        fetchPublicJobSeekerProfile,
       }}
     >
       {children}

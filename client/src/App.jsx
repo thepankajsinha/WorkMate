@@ -16,9 +16,12 @@ import RegisterEmployer from "./pages/Auth/RegisterEmployer";
 import JobSeekerRegister from "./pages/Auth/RegisterJobseeker";
 import JobListingPage from "./pages/Jobs/JobListingPage";
 import UpdateEmployerProfile from "./pages/Employer/UpdateEmployerProfile";
-import EmployerProfile from "./pages/Employer/EmployerProfile";
+import EmployerProfile from "./pages/Employer/EmployerPublicProfile";
 
 import { useAuth } from "./context/AuthContext";
+import JobseekerPublicProfile from "./pages/JobSeeker/JobseekerPublicProfile";
+import EmployerPublicProfile from "./pages/Employer/EmployerPublicProfile";
+import UpdateUser from "./pages/Auth/UpdateUser";
 
 function App() {
   const { user, loading } = useAuth();
@@ -42,8 +45,14 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobListingPage />} />
           <Route path="/jobs/:id" element={<JobDetailsPage />} />
-          <Route path="/company/:id" element={<EmployerProfile />} />
-
+          <Route
+            path="/jobseeker/public/:jobSeekerId"
+            element={<JobseekerPublicProfile />}
+          />
+          <Route
+            path="/employer/public/:employerId"
+            element={<EmployerPublicProfile />}
+          />
 
           {/* Auth Routes */}
           <Route
@@ -58,6 +67,8 @@ function App() {
             path="/register-jobseeker"
             element={user ? <Navigate to={"/"} /> : <JobSeekerRegister />}
           />
+
+          <Route path="/user-update" element={user ? <UpdateUser /> : <Navigate to= {"/login"} />} />
 
           {/* Employer Routes */}
           {isEmployer && (

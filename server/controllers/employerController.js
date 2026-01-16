@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Employer from "../models/employerModel.js";
 import User from "../models/userModel.js";
 import { uploadToS3 } from "../services/s3Upload.js";
@@ -176,6 +177,35 @@ export const getEmployer = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch employer profile",
+      error: error.message,
+    });
+  }
+};
+
+
+// GET  /api/employers/public/:companyId
+export const getEmployerById = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    // ✅ Check valid mongo id
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ message: "Invalid company id" });
+    }
+
+    const employer = await Employer.findById(companyId);
+
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found." });
+    }
+
+    return res.status(200).json({
+      message: "Employer public profile fetched successfully",
+      employer,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch employer public profile",
       error: error.message,
     });
   }

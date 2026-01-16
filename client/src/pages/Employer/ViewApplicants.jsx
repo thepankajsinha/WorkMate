@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -26,9 +26,23 @@ const ViewApplicants = () => {
     updateApplicantStatus,
   } = useApplicant();
 
+  // ✅ Modal State
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     getApplicantsForEmployer();
   }, []);
+
+  const openModal = (app) => {
+    setSelectedApplicant(app);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedApplicant(null);
+    setIsModalOpen(false);
+  };
 
   // ✅ "2 days ago" like format
   const timeAgo = (dateValue) => {
@@ -49,13 +63,13 @@ const ViewApplicants = () => {
     const base =
       "px-4 py-2 rounded-full text-sm font-bold border inline-flex items-center gap-2";
 
-    if (status === "Under Review") {
+    if (status === "Applied") {
       return (
         <span
           className={`${base} bg-yellow-50 border-yellow-100 text-yellow-700`}
         >
           <Eye size={16} />
-          Under Review
+          Applied
         </span>
       );
     }
@@ -78,7 +92,7 @@ const ViewApplicants = () => {
       );
     }
 
-    if (status === "Selected") {
+    if (status === "Hired") {
       return (
         <span
           className={`${base} bg-emerald-50 border-emerald-100 text-emerald-700`}
@@ -166,16 +180,14 @@ const ViewApplicants = () => {
           {!loading && applicants.length > 0 && (
             <div className="space-y-4">
               {applicants.map((app) => {
-                // ✅ Expected structure from backend:
-                // app = application document
-                // app.job, app.jobSeeker, app.resume.url, app.status, app.createdAt
-
                 const jobTitle = app?.job?.title || "Job";
+
                 const jobSeekerName =
-                  app?.jobSeeker?.name || app?.jobSeeker?.user?.name || "User";
-                const resumeUrl = app?.resume?.url || app?.resumeUrl || "";
+                  app?.jobSeeker?.user?.name || app?.jobSeeker?.name || "User";
+
+                const resumeUrl = app?.resume?.url || "";
                 const appliedTime = timeAgo(app?.createdAt);
-                const status = app?.status || "Under Review";
+                const status = app?.status || "Applied";
 
                 const jobSeekerId = app?.jobSeeker?._id || app?.jobSeeker?.id;
 
@@ -192,9 +204,22 @@ const ViewApplicants = () => {
                         </div>
 
                         <div>
-                          <h3 className="text-lg md:text-xl font-black text-slate-900">
+                          {/* ✅ Clickable Name -> JobSeeker Public Profile */}
+                          <Link
+                            to={
+                              jobSeekerId
+                                ? `/jobseeker/public/${jobSeekerId}`
+                                : "#"
+                            }
+                            className={`text-lg md:text-xl font-black text-slate-900 hover:text-blue-600 transition
+                              ${
+                                !jobSeekerId
+                                  ? "pointer-events-none opacity-60"
+                                  : ""
+                              }`}
+                          >
                             {jobSeekerName}
-                          </h3>
+                          </Link>
 
                           <div className="flex flex-wrap gap-2 mt-3">
                             {/* ✅ Job Title */}
@@ -242,30 +267,22 @@ const ViewApplicants = () => {
                             }
                             className="bg-transparent outline-none font-bold text-slate-700"
                           >
-                            <option>Under Review</option>
+                            <option>Applied</option>
                             <option>Shortlisted</option>
                             <option>Rejected</option>
-                            <option>Selected</option>
+                            <option>Hired</option>
                           </select>
                         </div>
 
-                        {/* ✅ View JobSeeker Profile */}
-                        <Link
-                          to={
-                            jobSeekerId
-                              ? `/jobseeker/public/${jobSeekerId}`
-                              : "#"
-                          }
-                          className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-lg
-                            ${
-                              jobSeekerId
-                                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
-                                : "bg-slate-100 text-slate-400 cursor-not-allowed pointer-events-none"
-                            }`}
+                        {/* ✅ View -> Open Modal (Cover Letter) */}
+                        <button
+                          onClick={() => openModal(app)}
+                          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-lg
+                            bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
                         >
                           <FileText size={18} />
                           View
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -275,6 +292,62 @@ const ViewApplicants = () => {
           )}
         </motion.div>
       </main>
+
+      {/* ✅ Cover Letter Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div onClick={closeModal} className="absolute inset-0 bg-black/40" />
+
+          {/* Modal */}
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl md:text-2xl font-black text-slate-900">
+                  Cover Letter
+                </h2>
+
+                <p className="text-slate-500 mt-1 font-semibold">
+                  {selectedApplicant?.jobSeeker?.user?.name ||
+                    selectedApplicant?.jobSeeker?.name ||
+                    "Applicant"}
+                </p>
+              </div>
+
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-[60vh] overflow-y-auto">
+              <p className="text-slate-700 font-medium whitespace-pre-line">
+                {selectedApplicant?.coverLetter || "No cover letter provided."}
+              </p>
+            </div>
+
+            {/* ✅ Resume Button in Modal */}
+            <div className="mt-5 flex justify-end">
+              <a
+                href={selectedApplicant?.resume?.url || "#"}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all
+                  ${
+                    selectedApplicant?.resume?.url
+                      ? "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                      : "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
+                  }`}
+              >
+                <Download size={18} className="text-blue-600" />
+                Resume
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

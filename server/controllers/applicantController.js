@@ -119,10 +119,7 @@ export const getEmployerApplicants = async (req, res) => {
 
     // ✅ find applicants for those jobs
     const applicants = await Applicant.find({ job: { $in: jobIds } })
-      .populate({
-        path: "job",
-        select: "title jobType location salary experience",
-      })
+      .populate("job")
       .populate({
         path: "jobSeeker",
         populate: {

@@ -7,6 +7,7 @@ export const EmployerContext = createContext();
 
 export const EmployerProvider = ({ children }) => {
   const [employer, setEmployer] = useState(null);
+  const [publicEmployer, setPublicEmployer] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -24,6 +25,26 @@ export const EmployerProvider = ({ children }) => {
   useEffect(() => {
     fetchEmployerProfile();
   }, []);
+
+  const fetchPublicEmployerProfile = async (companyId) => {
+    try {
+      setLoading(true);
+
+      const res = await api.get(`/api/employers/public/${companyId}`);
+      setPublicEmployer(res.data.employer);
+
+      return res.data;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to fetch public employer profile"
+      );
+      setPublicEmployer(null);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const registerEmployerProfile = async (formData) => {
     try {
@@ -68,6 +89,8 @@ export const EmployerProvider = ({ children }) => {
     fetchEmployerProfile,
     registerEmployerProfile,
     updateEmployerProfile,
+    publicEmployer,
+    fetchPublicEmployerProfile
   };
 
   return (

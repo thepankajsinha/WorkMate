@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import Job from "../models/jobModel.js";
 import Employer from "../models/employerModel.js";
+import Applicant from "../models/applicantModel.js"
 
 
 export const createJob = async (req, res) => {
@@ -252,9 +254,14 @@ export const getSingleJob = async (req, res) => {
       return res.status(404).json({ message: "Job not found" });
     }
 
+    const applicants = await Applicant.countDocuments({ job: job._id });
+
     return res.status(200).json({
       message: "Job fetched successfully",
-      job,
+      job: {
+        ...job.toObject(),
+        applicants, // ✅ send this
+      },
     });
   } catch (error) {
     console.error("Error fetching job:", error);
@@ -288,6 +295,33 @@ export const getEmployerJobs = async (req, res) => {
     });
   }
 };
+
+
+export const getJobsByEmployerId = async (req, res) => {
+  try {
+    const { employerId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(employerId)) {
+      return res.status(400).json({ message: "Invalid employerId" });
+    }
+
+    const jobs = await Job.find({ employer: employerId }).sort({
+      createdAt: -1,
+    });
+
+    return res.status(200).json({
+      message: "Employer jobs fetched successfully",
+      total: jobs.length,
+      jobs,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch employer jobs",
+      error: error.message,
+    });
+  }
+};
+
 
 
 export const toggleJobStatus = async (req, res) => {

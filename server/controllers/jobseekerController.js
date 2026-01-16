@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import JobSeeker from "../models/jobseekerModel.js";
 import { uploadToS3 } from "../services/s3Upload.js";
@@ -254,3 +255,33 @@ export const getJobSeeker = async (req, res) => {
     });
   }
 };
+
+
+
+// api/jobseekers/public/:jobSeekerId
+export const getJobSeekerById = async (req, res) => {
+  try {
+    const { jobSeekerId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(jobSeekerId)) {
+      return res.status(400).json({ message: "Invalid jobSeekerId" });
+    }
+
+    const jobSeeker = await JobSeeker.findById(jobSeekerId).populate("user", "name email role");
+
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "JobSeeker profile not found" });
+    }
+
+    return res.status(200).json({
+      message: "JobSeeker public profile fetched successfully",
+      jobSeeker,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch job seeker public profile",
+      error: error.message,
+    });
+  }
+};
+

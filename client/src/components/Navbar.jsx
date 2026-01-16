@@ -131,6 +131,19 @@ const Navbar = () => {
                       </p>
                     </div>
 
+                    {/* ✅ Common for BOTH roles */}
+                    <Link
+                      to="/user-update"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Settings size={18} className="opacity-70" />
+                      Update Account
+                    </Link>
+
+                    <div className="my-1 border-t border-slate-50" />
+
+                    {/* ✅ Jobseeker links */}
                     {user.role === "jobseeker" && (
                       <>
                         <Link
@@ -147,7 +160,7 @@ const Navbar = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
                           <Settings size={18} className="opacity-70" /> Update
-                          Profile
+                          JobSeeker Profile
                         </Link>
 
                         <Link
@@ -155,8 +168,8 @@ const Navbar = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Bookmark size={18} className="opacity-70" />{" "}
-                          Bookmarked Jobs
+                          <Bookmark size={18} className="opacity-70" /> Bookmarked
+                          Jobs
                         </Link>
 
                         <Link
@@ -170,9 +183,9 @@ const Navbar = () => {
                       </>
                     )}
 
+                    {/* ✅ Employer links */}
                     {user.role === "employer" && (
                       <>
-                        {/* ✅ Employer Profile */}
                         <Link
                           to="/employer/update-profile"
                           onClick={() => setOpen(false)}
@@ -182,17 +195,14 @@ const Navbar = () => {
                           Employer Profile
                         </Link>
 
-                        {/* ✅ Post Job */}
                         <Link
                           to="/employer/post-job"
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Briefcase size={18} className="opacity-70" /> Post a
-                          Job
+                          <Briefcase size={18} className="opacity-70" /> Post a Job
                         </Link>
 
-                        {/* ✅ Manage Jobs */}
                         <Link
                           to="/employer/manage-jobs"
                           onClick={() => setOpen(false)}
@@ -202,14 +212,12 @@ const Navbar = () => {
                           Jobs
                         </Link>
 
-                        {/* ✅ View Applicants */}
                         <Link
                           to="/employer/applicants"
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Users size={18} className="opacity-70" /> View
-                          Applicants
+                          <Users size={18} className="opacity-70" /> View Applicants
                         </Link>
                       </>
                     )}
