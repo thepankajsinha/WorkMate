@@ -57,17 +57,15 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-100 z-[100]">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex justify-between items-center">
-        {/* --- BRAND / LOGO --- */}
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="bg-blue-600 p-2 rounded-xl group-hover:rotate-12 transition-transform duration-300">
             <Brain size={24} className="text-white" />
           </div>
           <span className="text-2xl font-black text-slate-900 tracking-tight">
-            Hire<span className="text-blue-600">Mind</span>
+            Work<span className="text-blue-600">Mate</span>
           </span>
         </Link>
 
-        {/* --- CENTER NAVIGATION --- */}
         <div className="hidden md:flex items-center gap-2">
           <Link to="/" className={navLinkStyle("/")}>
             <Home size={18} />
@@ -172,6 +170,50 @@ const Navbar = () => {
                       </>
                     )}
 
+                    {user.role === "employer" && (
+                      <>
+                        {/* ✅ Employer Profile */}
+                        <Link
+                          to="/employer/update-profile"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <Settings size={18} className="opacity-70" /> Update
+                          Employer Profile
+                        </Link>
+
+                        {/* ✅ Post Job */}
+                        <Link
+                          to="/employer/post-job"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <Briefcase size={18} className="opacity-70" /> Post a
+                          Job
+                        </Link>
+
+                        {/* ✅ Manage Jobs */}
+                        <Link
+                          to="/employer/manage-jobs"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <Building2 size={18} className="opacity-70" /> Manage
+                          Jobs
+                        </Link>
+
+                        {/* ✅ View Applicants */}
+                        <Link
+                          to="/employer/applicants"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <Users size={18} className="opacity-70" /> View
+                          Applicants
+                        </Link>
+                      </>
+                    )}
+
                     <div className="my-1 border-t border-slate-50" />
 
                     <button
@@ -191,7 +233,7 @@ const Navbar = () => {
                 to="/login"
                 className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-blue-600 bg-blue-100 transition-all hover:bg-gray-100 hover:text-black active:scale-[0.98]"
               >
-                <LogIn size={18} /> 
+                <LogIn size={18} />
                 Login
               </Link>
 

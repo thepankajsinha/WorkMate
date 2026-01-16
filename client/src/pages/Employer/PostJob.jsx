@@ -12,19 +12,21 @@ import {
   ClipboardList,
   CheckSquare,
   ArrowRight,
-  Plus,
-  X,
   Loader2,
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
+import { useJobs } from "../../context/JobContext";
 
 const PostJob = () => {
+  const { createJob, loading } = useJobs();
+
   const [form, setForm] = useState({
     title: "",
     description: "",
     requirements: "",
     responsibilities: "",
+    skills: "", // ✅ comma separated string
     jobType: "Full-Time",
     location: "",
     salary: "",
@@ -33,83 +35,32 @@ const PostJob = () => {
     isActive: true,
   });
 
-  // ✅ Skills
-  const [skillInput, setSkillInput] = useState("");
-  const [skills, setSkills] = useState([]);
-
-  // ✅ Submit states
-  const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const addSkill = () => {
-    const val = skillInput.trim().toLowerCase();
-    if (!val) return;
-
-    if (skills.includes(val)) {
-      setSkillInput("");
-      return;
-    }
-
-    setSkills((prev) => [...prev, val]);
-    setSkillInput("");
-  };
-
-  const removeSkill = (skill) => {
-    setSkills((prev) => prev.filter((s) => s !== skill));
-  };
-
-  const handleSkillKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addSkill();
-    }
-  };
-
-  const resetMessages = () => {
-    setSuccessMsg("");
-    setErrorMsg("");
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    resetMessages();
 
-    try {
-      setLoading(true);
+    const payload = {
+      title: form.title,
+      description: form.description,
 
-      // ✅ Payload (match your Job schema)
-      const payload = {
-        title: form.title,
-        description: form.description,
-        requirements: form.requirements,
-        responsibilities: form.responsibilities,
-        skills,
-        jobType: form.jobType,
-        location: form.location,
-        salary: form.salary,
-        experience: form.experience,
-        openings: form.openings ? Number(form.openings) : 1,
-        isActive: form.isActive,
-        postedOn: new Date(),
-      };
+      // ✅ send as string (backend will split into array)
+      skills: form.skills,
+      requirements: form.requirements,
+      responsibilities: form.responsibilities,
 
-      console.log("✅ POST JOB PAYLOAD:", payload);
+      jobType: form.jobType,
+      location: form.location,
+      salary: form.salary,
+      experience: form.experience,
+      openings: Number(form.openings),
+      isActive: form.isActive,
+    };
 
-      // ✅ Later you will call backend api here
-      await new Promise((r) => setTimeout(r, 900));
-
-      setSuccessMsg("Job posted successfully ✅");
-    } catch (err) {
-      setErrorMsg("Job post failed ❌");
-    } finally {
-      setLoading(false);
-    }
+    await createJob(payload);
   };
 
   return (
@@ -144,7 +95,6 @@ const PostJob = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-5xl mx-auto bg-white border border-slate-100 rounded-3xl p-6 md:p-10 shadow-2xl shadow-blue-900/10"
         >
-          {/* Title */}
           <div className="text-center mb-10">
             <h1 className="text-3xl md:text-4xl font-black leading-tight">
               Post a <span className="text-blue-600">New Job</span>
@@ -153,18 +103,6 @@ const PostJob = () => {
               Create a job post and start receiving applicants instantly.
             </p>
           </div>
-
-          {/* Messages */}
-          {successMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
-              ✅ {successMsg}
-            </div>
-          )}
-          {errorMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-600 font-bold">
-              ❌ {errorMsg}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* ✅ Basic Info */}
@@ -222,6 +160,7 @@ const PostJob = () => {
                     onChange={handleChange}
                     placeholder="e.g. Delhi / Remote"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -240,6 +179,7 @@ const PostJob = () => {
                     onChange={handleChange}
                     placeholder="e.g. ₹6 LPA - ₹10 LPA"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -258,6 +198,7 @@ const PostJob = () => {
                     onChange={handleChange}
                     placeholder="e.g. 0 - 2 Years"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -277,6 +218,7 @@ const PostJob = () => {
                     placeholder="e.g. 3"
                     className="w-full bg-transparent outline-none font-medium"
                     min={1}
+                    required
                   />
                 </div>
               </div>
@@ -314,53 +256,22 @@ const PostJob = () => {
               </div>
             </div>
 
-            {/* ✅ Skills */}
+            {/* ✅ Skills (Comma separated) */}
             <div>
               <label className="text-sm font-bold text-slate-700">
-                Skills (Add Multiple)
+                Skills (Comma Separated)
               </label>
-
-              <div className="mt-2 flex flex-col md:flex-row gap-3">
-                <div className="flex-1 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500">
-                  <Plus size={18} className="text-blue-600" />
-                  <input
-                    type="text"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={handleSkillKeyDown}
-                    placeholder="e.g. React, Node.js, MongoDB"
-                    className="w-full bg-transparent outline-none font-medium"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addSkill}
-                  className="px-6 py-3 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all"
-                >
-                  Add Skill
-                </button>
+              <div className="mt-2 flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500">
+                <CheckSquare size={18} className="text-blue-600 mt-1" />
+                <textarea
+                  name="skills"
+                  value={form.skills}
+                  onChange={handleChange}
+                  placeholder="Enter comma separated skills e.g. React, Node.js, MongoDB"
+                  className="w-full bg-transparent outline-none font-medium min-h-[90px] resize-none"
+                  required
+                />
               </div>
-
-              {skills.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-bold"
-                    >
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="hover:text-red-500 transition-colors"
-                      >
-                        <X size={16} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* ✅ Description */}
@@ -384,7 +295,7 @@ const PostJob = () => {
             {/* ✅ Responsibilities */}
             <div>
               <label className="text-sm font-bold text-slate-700">
-                Responsibilities
+                Responsibilities (Comma Separated)
               </label>
               <div className="mt-2 flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500">
                 <ClipboardList size={18} className="text-blue-600 mt-1" />
@@ -392,7 +303,7 @@ const PostJob = () => {
                   name="responsibilities"
                   value={form.responsibilities}
                   onChange={handleChange}
-                  placeholder="Write responsibilities (example: build UI, integrate APIs...)"
+                  placeholder="Enter comma separated responsibilities e.g. Build UI, Integrate APIs, Fix bugs"
                   className="w-full bg-transparent outline-none font-medium min-h-[140px] resize-none"
                   required
                 />
@@ -402,7 +313,7 @@ const PostJob = () => {
             {/* ✅ Requirements */}
             <div>
               <label className="text-sm font-bold text-slate-700">
-                Requirements
+                Requirements (Comma Separated)
               </label>
               <div className="mt-2 flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500">
                 <CheckSquare size={18} className="text-blue-600 mt-1" />
@@ -410,7 +321,7 @@ const PostJob = () => {
                   name="requirements"
                   value={form.requirements}
                   onChange={handleChange}
-                  placeholder="Write requirements (example: React, Git, APIs...)"
+                  placeholder="Enter comma separated requirements e.g. React experience, Git knowledge, REST APIs"
                   className="w-full bg-transparent outline-none font-medium min-h-[140px] resize-none"
                   required
                 />

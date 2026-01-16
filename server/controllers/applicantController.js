@@ -41,13 +41,21 @@ export const applyJob = async (req, res) => {
       userId
     );
 
-    const resumeUrl = uploadedResume?.url || "";
+    // ✅ IMPORTANT FIX
+    const resumeData = {
+      key: uploadedResume?.key || "",
+      url: uploadedResume?.url || "",
+    };
+
+    if (!resumeData.url) {
+      return res.status(500).json({ message: "Resume upload failed" });
+    }
 
     const application = await Applicant.create({
       job: jobId,
       jobSeeker: jobSeeker._id,
       coverLetter: coverLetter || "",
-      resume: resumeUrl,
+      resume: resumeData, // ✅ correct format
       status: "Applied",
     });
 
@@ -62,6 +70,7 @@ export const applyJob = async (req, res) => {
     });
   }
 };
+
 
 
 export const myApplications = async (req, res) => {

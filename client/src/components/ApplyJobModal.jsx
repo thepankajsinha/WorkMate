@@ -10,27 +10,26 @@ import {
   Trash2,
   CheckCircle2,
 } from "lucide-react";
+import { useApplicant } from "../context/ApplicantContext"; // ✅ import
 
 const ApplyJobModal = ({ open, onClose, job }) => {
+  const { applyForJob, loading } = useApplicant(); // ✅ context
+
   const [resumeFile, setResumeFile] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const [submitLoading, setSubmitLoading] = useState(false);
 
   // ✅ success animation state
   const [success, setSuccess] = useState(false);
 
-  // ✅ Reset when modal opens
   useEffect(() => {
     if (!open) return;
     setResumeFile(null);
     setCoverLetter("");
     setAiLoading(false);
-    setSubmitLoading(false);
     setSuccess(false);
   }, [open]);
 
-  // ✅ ESC close
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "Escape") onClose?.();
@@ -40,8 +39,7 @@ const ApplyJobModal = ({ open, onClose, job }) => {
   }, [open, onClose]);
 
   const jobTitle = job?.title || "Job Role";
-  const companyName = job?.companyName || "Company";
-  const location = job?.location || "Location";
+  const companyName = job?.employer?.companyName || "Company";
 
   const resumeLabel = useMemo(() => {
     if (!resumeFile) return "Upload Resume (PDF)";
@@ -57,7 +55,7 @@ const ApplyJobModal = ({ open, onClose, job }) => {
       return;
     }
 
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024; // ✅ 5MB
     if (file.size > maxSize) {
       alert("Resume file too large (Max 5MB) ❌");
       return;
@@ -66,66 +64,65 @@ const ApplyJobModal = ({ open, onClose, job }) => {
     setResumeFile(file);
   };
 
-  // ✅ Demo AI generator (frontend only)
+  // ✅ Demo AI generator
   const handleGenerateAI = async () => {
     setAiLoading(true);
 
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1000));
 
     const aiText = `Dear Hiring Manager,
 
-I am excited to apply for the ${jobTitle} position at ${companyName}. I enjoy building modern, user-friendly web applications and collaborating with teams to ship clean UI fast.
+I am excited to apply for the ${jobTitle} position at ${companyName}.
+I have strong skills in React, JavaScript and modern UI development.
 
-I have strong skills in React, JavaScript, Tailwind CSS and API integration. I have built multiple projects where I focused on reusable components, responsive design and performance improvements.
-
-I would love the opportunity to contribute to ${companyName} and grow as a developer.
-
-Sincerely,  
+Sincerely,
 [Your Name]`;
 
     setCoverLetter(aiText);
     setAiLoading(false);
   };
 
-  // ✅ Submit Application (with success animation)
+  // ✅ Submit Application (REAL API CALL)
   const handleSubmitApplication = async () => {
+    if (!job?._id) {
+      alert("Invalid job id ❌");
+      return;
+    }
+
     if (!resumeFile) {
       alert("Please upload your resume first ✅");
       return;
     }
 
     if (!coverLetter.trim()) {
-      alert("Please write a cover letter or generate using AI ✅");
+      alert("Please write cover letter or generate using AI ✅");
       return;
     }
 
-    setSubmitLoading(true);
+    try {
+      await applyForJob({
+        jobId: job._id,
+        coverLetter,
+        resumeFile,
+      });
 
-    const payload = {
-      jobId: job?._id,
-      coverLetter,
-      resumeFileName: resumeFile?.name,
-    };
+      // ✅ show success animation
+      setSuccess(true);
 
-    console.log("✅ APPLY JOB PAYLOAD:", payload);
-
-    await new Promise((r) => setTimeout(r, 900));
-    setSubmitLoading(false);
-
-    // ✅ show success
-    setSuccess(true);
-
-    // ✅ auto close after 1.6s
-    setTimeout(() => {
-      onClose?.();
-    }, 1600);
+      // ✅ auto close modal
+      setTimeout(() => {
+        onClose?.();
+      }, 1600);
+    } catch (error) {
+      // toast already handled in context
+    }
   };
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* ✅ Overlay */}
+          {/* Overlay */}
           <motion.div
             className="fixed inset-0 bg-black/50 z-[200] backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -134,7 +131,7 @@ Sincerely,
             onClick={onClose}
           />
 
-          {/* ✅ Modal */}
+          {/* Modal */}
           <motion.div
             className="fixed inset-0 z-[210] flex items-center justify-center px-4 py-8"
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -146,7 +143,7 @@ Sincerely,
               className="w-full max-w-2xl bg-white border border-slate-100 rounded-3xl shadow-2xl shadow-blue-900/15 overflow-hidden relative"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* ✅ Success Screen Overlay */}
+              {/* ✅ Success Screen */}
               <AnimatePresence>
                 {success && (
                   <motion.div
@@ -155,35 +152,18 @@ Sincerely,
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center max-w-md"
-                    >
-                      <motion.div
-                        initial={{ scale: 0.7, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 15,
-                        }}
-                        className="mx-auto w-20 h-20 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center"
-                      >
+                    <div className="text-center max-w-md">
+                      <div className="mx-auto w-20 h-20 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
                         <CheckCircle2 size={38} className="text-emerald-600" />
-                      </motion.div>
+                      </div>
 
                       <h3 className="mt-5 text-2xl font-black text-slate-900">
-                        Application Submitted ✅
+                        Applied Successfully ✅
                       </h3>
                       <p className="mt-2 text-slate-500 font-medium">
-                        Your resume & cover letter have been sent successfully.
+                        Your resume & cover letter were submitted.
                       </p>
-
-                      <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-bold">
-                        {jobTitle} • {companyName}
-                      </div>
-                    </motion.div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -194,6 +174,9 @@ Sincerely,
                   <h2 className="text-xl md:text-2xl font-black text-slate-900">
                     Apply for Job
                   </h2>
+                  <p className="text-sm text-slate-500 font-bold mt-1">
+                    {jobTitle} • {companyName}
+                  </p>
                 </div>
 
                 <button
@@ -206,7 +189,7 @@ Sincerely,
 
               {/* Body */}
               <div className="p-6 space-y-6">
-                {/* Resume Upload */}
+                {/* Resume */}
                 <div>
                   <label className="text-sm font-bold text-slate-700">
                     Resume (PDF)
@@ -290,14 +273,9 @@ Sincerely,
                   <textarea
                     value={coverLetter}
                     onChange={(e) => setCoverLetter(e.target.value)}
-                    placeholder="Write a short cover letter... (or generate using AI)"
+                    placeholder="Write a short cover letter..."
                     className="mt-2 w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none font-medium focus:ring-2 focus:ring-blue-500 min-h-[160px]"
                   />
-
-                  <p className="text-xs text-slate-400 font-semibold mt-2">
-                    Tip: Keep it short, highlight skills + why you fit this
-                    role.
-                  </p>
                 </div>
               </div>
 
@@ -314,15 +292,15 @@ Sincerely,
                 <button
                   type="button"
                   onClick={handleSubmitApplication}
-                  disabled={submitLoading}
+                  disabled={loading}
                   className={`px-6 py-3 rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center gap-2
                     ${
-                      submitLoading
+                      loading
                         ? "bg-blue-300 text-white cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
                     }`}
                 >
-                  {submitLoading ? (
+                  {loading ? (
                     <>
                       <Loader2 size={18} className="animate-spin" />
                       Submitting...

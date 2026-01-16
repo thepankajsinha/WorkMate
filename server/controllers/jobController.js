@@ -273,7 +273,7 @@ export const getEmployerJobs = async (req, res) => {
       return res.status(404).json({ message: "Employer profile not found" });
     }
 
-    const jobs = await Job.find({ employer: employer._id }).sort({createdAt: -1,});
+    const jobs = await Job.find({ employer: employer._id }).populate("employer").sort({ createdAt: -1 });
 
     return res.status(200).json({
       message: "Employer jobs fetched successfully",

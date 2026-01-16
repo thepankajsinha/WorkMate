@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   Brain,
   Zap,
@@ -17,71 +17,127 @@ import {
   BookmarkCheck,
   Send,
   Users,
+  Loader2,
 } from "lucide-react";
 
 import ApplyJobModal from "../../components/ApplyJobModal";
+import { useJobs } from "../../context/JobContext";
+import { useBookmarks } from "../../context/BookmarkContext";
 
 const JobDetailsPage = () => {
+  const { id } = useParams();
+  const { getJobById } = useJobs();
+
+  const { addBookmark, removeBookmark, isBookmarked } = useBookmarks();
+  const [hasApplied, setHasApplied] = useState(false);
+
+
   const [openApplyModal, setOpenApplyModal] = useState(false);
 
-  // ✅ Save Toggle
+  // ✅ Bookmark
   const [isSaved, setIsSaved] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
-  // ✅ Dummy Job Data
-  const job = {
-    _id: "job_123",
-    id: "job_123",
-    title: "Frontend Developer (React)",
-    companyName: "HireMind Technologies",
-    companyLogo:
-      "https://ui-avatars.com/api/?name=HireMind&background=0148D6&color=fff",
-    location: "Delhi / Remote",
-    jobType: "Full-time",
-    experience: "0 - 2 Years",
-    salary: "₹6 LPA - ₹10 LPA",
-    postedOn: "2026-01-12",
-    openings: 3,
-    applicants: 120,
-    description:
-      "We are looking for a passionate Frontend Developer to build modern web applications with React and TailwindCSS. You’ll work with product designers and backend engineers to ship features fast.",
-    responsibilities: [
-      "Develop responsive UI using React + TailwindCSS",
-      "Integrate REST APIs and handle state management",
-      "Write clean, reusable, maintainable components",
-      "Collaborate with backend team and UI/UX designer",
-      "Optimize performance and improve user experience",
-    ],
-    requirements: [
-      "Strong understanding of HTML, CSS, JavaScript",
-      "Good hands-on practice with React",
-      "Basic knowledge of Git and GitHub",
-      "Understanding of REST APIs",
-      "Nice to have: Next.js, Redux, TypeScript",
-    ],
-    skills: ["React", "JavaScript", "TailwindCSS", "API", "Git"],
+  // ✅ Job state
+  const [job, setJob] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  const timeAgo = (date) => {
+    if (!date) return "—";
+    const now = new Date();
+    const posted = new Date(date);
+    const diffMs = now - posted;
+
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    if (days === 1) return "1 day ago";
+    return `${days} days ago`;
   };
 
-  const toggleSaveJob = () => {
-    setIsSaved((prev) => !prev);
+  // ✅ Load job
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        setPageLoading(true);
+        const res = await getJobById(id);
+        setJob(res?.job || null);
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    fetchJob();
+  }, [id]);
+
+  // ✅ Check bookmark status
+  useEffect(() => {
+    const check = async () => {
+      if (!id) return;
+      const bookmarked = await isBookmarked(id);
+      setIsSaved(bookmarked);
+    };
+
+    check();
+  }, [id]);
+
+  // ✅ Toggle Bookmark
+  const toggleSaveJob = async () => {
+    if (!id) return;
+
+    try {
+      setBookmarkLoading(true);
+
+      if (isSaved) {
+        await removeBookmark(id);
+        setIsSaved(false);
+      } else {
+        await addBookmark(id);
+        setIsSaved(true);
+      }
+    } finally {
+      setBookmarkLoading(false);
+    }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center gap-2 text-slate-700 font-bold">
+        <Loader2 className="animate-spin" size={18} />
+        Loading job details...
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-slate-600 font-bold">Job not found ❌</p>
+      </div>
+    );
+  }
+
+  const companyName = job?.employer?.companyName || "Company";
+  const companyLogo =
+    job?.employer?.companyLogo?.url ||
+    `https://ui-avatars.com/api/?name=${companyName}&background=0148D6&color=fff`;
+
+  const companyId = job?.employer?._id;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-slate-900 overflow-x-hidden relative">
-      {/* ✅ Blue Glow Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-3xl" />
-        <div className="absolute top-40 right-[-120px] w-[520px] h-[520px] bg-indigo-400/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-180px] left-1/2 -translate-x-1/2 w-[650px] h-[650px] bg-sky-400/10 rounded-full blur-3xl" />
-      </div>
-
-      {/* ✅ Header */}
+      {/* Header */}
       <header className="w-full px-4 pt-10 pb-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-blue-600 p-1.5 rounded-lg shadow-sm">
               <Brain size={24} className="text-white" />
             </div>
-            <span className="text-2xl font-black tracking-tight">HireMind</span>
+            <span className="text-2xl font-black tracking-tight">WorkMate</span>
           </div>
 
           <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-bold">
@@ -91,14 +147,13 @@ const JobDetailsPage = () => {
         </div>
       </header>
 
-      {/* ✅ Content */}
       <main className="px-4 pb-20 pt-4">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-6xl mx-auto space-y-6"
         >
-          {/* Back Button */}
+          {/* Back */}
           <div>
             <Link
               to="/jobs"
@@ -109,28 +164,36 @@ const JobDetailsPage = () => {
             </Link>
           </div>
 
-          {/* ✅ Top Job Card */}
+          {/* Top Card */}
           <div className="bg-white border border-slate-100 rounded-3xl p-6 md:p-10 shadow-2xl shadow-blue-900/10">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
               {/* Left */}
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                {/* ✅ Company Logo Click */}
+                <Link
+                  to={companyId ? `/company/${companyId}` : "#"}
+                  className="w-16 h-16 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm block hover:scale-[1.02] transition"
+                >
                   <img
-                    src={job.companyLogo}
+                    src={companyLogo}
                     alt="logo"
                     className="w-full h-full object-cover"
                   />
-                </div>
+                </Link>
 
                 <div>
                   <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
                     {job.title}
                   </h1>
 
-                  <p className="text-slate-700 font-bold mt-2 flex items-center gap-2">
+                  {/* ✅ Company Name Click */}
+                  <Link
+                    to={companyId ? `/company/${companyId}` : "#"}
+                    className="text-slate-700 font-bold mt-2 flex items-center gap-2 hover:text-blue-600 transition"
+                  >
                     <Building2 size={18} className="text-blue-600" />
-                    {job.companyName}
-                  </p>
+                    {companyName}
+                  </Link>
 
                   <div className="flex flex-wrap gap-3 mt-4 text-sm font-bold text-slate-600">
                     <span className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200">
@@ -154,7 +217,6 @@ const JobDetailsPage = () => {
                     </span>
                   </div>
 
-                  {/* ✅ Saved feedback */}
                   <AnimatePresence>
                     {isSaved && (
                       <motion.p
@@ -172,26 +234,40 @@ const JobDetailsPage = () => {
 
               {/* Right Actions */}
               <div className="flex flex-col sm:flex-row md:flex-col gap-3">
-                {/* Apply */}
+                {/* ✅ Apply Now */}
                 <button
                   onClick={() => setOpenApplyModal(true)}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                  disabled={hasApplied}
+                  className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg
+                      ${
+                        hasApplied
+                          ? "bg-emerald-100 text-emerald-700 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
+                      }`}
                 >
                   <Send size={18} />
-                  Apply Now
+                  {hasApplied ? "Applied ✅" : "Apply Now"}
                 </button>
 
-                {/* ✅ Save toggle */}
+                {/* ✅ Bookmark toggle */}
                 <button
                   onClick={toggleSaveJob}
+                  disabled={bookmarkLoading}
                   className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all border
                     ${
                       isSaved
                         ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                         : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                    }`}
+                    } ${
+                    bookmarkLoading ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
                 >
-                  {isSaved ? (
+                  {bookmarkLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Please wait
+                    </>
+                  ) : isSaved ? (
                     <>
                       <BookmarkCheck size={18} />
                       Saved
@@ -206,15 +282,15 @@ const JobDetailsPage = () => {
               </div>
             </div>
 
-            {/* Job meta */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Meta Cards */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-5 rounded-3xl border border-slate-100 bg-slate-50">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Posted On
+                  Posted
                 </p>
                 <p className="text-slate-900 font-black mt-2 flex items-center gap-2">
                   <CalendarDays size={18} className="text-blue-600" />
-                  {job.postedOn}
+                  {timeAgo(job.postedOn || job.createdAt)}
                 </p>
               </div>
 
@@ -224,7 +300,7 @@ const JobDetailsPage = () => {
                 </p>
                 <p className="text-slate-900 font-black mt-2 flex items-center gap-2">
                   <BadgeCheck size={18} className="text-blue-600" />
-                  {job.openings}
+                  {job.openings ?? 0}
                 </p>
               </div>
 
@@ -234,24 +310,15 @@ const JobDetailsPage = () => {
                 </p>
                 <p className="text-slate-900 font-black mt-2 flex items-center gap-2">
                   <Users size={18} className="text-blue-600" />
-                  {job.applicants}
+                  {job.applicants ?? 0}
                 </p>
-              </div>
-
-              <div className="p-5 rounded-3xl border border-slate-100 bg-slate-50">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Job ID
-                </p>
-                <p className="text-slate-900 font-black mt-2">{job.id}</p>
               </div>
             </div>
           </div>
 
-          {/* ✅ Main Section Grid */}
+          {/* Details */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left details */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Description */}
               <div className="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-xl shadow-blue-900/5">
                 <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
                   <FileText size={20} className="text-blue-600" />
@@ -262,14 +329,12 @@ const JobDetailsPage = () => {
                 </p>
               </div>
 
-              {/* Responsibilities */}
               <div className="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-xl shadow-blue-900/5">
                 <h2 className="text-lg font-black text-slate-900">
                   Responsibilities
                 </h2>
-
                 <ul className="mt-4 space-y-3">
-                  {job.responsibilities.map((item, idx) => (
+                  {(job.responsibilities || []).map((item, idx) => (
                     <li
                       key={idx}
                       className="flex items-start gap-3 text-slate-600 font-medium"
@@ -281,14 +346,12 @@ const JobDetailsPage = () => {
                 </ul>
               </div>
 
-              {/* Requirements */}
               <div className="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-xl shadow-blue-900/5">
                 <h2 className="text-lg font-black text-slate-900">
                   Requirements
                 </h2>
-
                 <ul className="mt-4 space-y-3">
-                  {job.requirements.map((item, idx) => (
+                  {(job.requirements || []).map((item, idx) => (
                     <li
                       key={idx}
                       className="flex items-start gap-3 text-slate-600 font-medium"
@@ -301,16 +364,14 @@ const JobDetailsPage = () => {
               </div>
             </div>
 
-            {/* Right side */}
             <div className="space-y-6">
-              {/* Skills */}
               <div className="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-xl shadow-blue-900/5">
                 <h2 className="text-lg font-black text-slate-900">
                   Skills Needed
                 </h2>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {job.skills.map((skill) => (
+                  {(job.skills || []).map((skill) => (
                     <span
                       key={skill}
                       className="px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-bold"
@@ -335,15 +396,17 @@ const JobDetailsPage = () => {
                   Apply Now
                 </button>
 
-                {/* ✅ Save toggle inside sticky */}
                 <button
                   onClick={toggleSaveJob}
+                  disabled={bookmarkLoading}
                   className={`mt-3 w-full py-3 rounded-2xl font-black transition-all border
                     ${
                       isSaved
                         ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                         : "bg-transparent border-white/30 text-white hover:bg-white/10"
-                    }`}
+                    } ${
+                    bookmarkLoading ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
                 >
                   {isSaved ? "Saved ✅" : "Save Job"}
                 </button>
@@ -353,11 +416,12 @@ const JobDetailsPage = () => {
         </motion.div>
       </main>
 
-      {/* ✅ APPLY MODAL */}
+      {/* ✅ Apply modal */}
       <ApplyJobModal
         open={openApplyModal}
         onClose={() => setOpenApplyModal(false)}
         job={job}
+        onSuccess={() => setHasApplied(true)}
       />
     </div>
   );

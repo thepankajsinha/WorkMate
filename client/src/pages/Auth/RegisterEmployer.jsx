@@ -13,16 +13,13 @@ import {
   UploadCloud,
   ArrowRight,
   CheckCircle2,
-  XCircle,
   Loader2,
 } from "lucide-react";
-// import {
-//   registerEmployerApi,
-//   uploadEmployerLogoApi,
-//   createEmployerProfileApi,
-// } from "../api/employerApi";
+import { useEmployer } from "../../context/EmployerContext";
 
 const EmployerRegister = () => {
+  const { registerEmployerProfile, loading } = useEmployer();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,107 +31,41 @@ const EmployerRegister = () => {
     industry: "",
   });
 
-  // Logo upload states
   const [logoPreview, setLogoPreview] = useState(null);
-  const [uploadedLogo, setUploadedLogo] = useState(null); // { url, key }
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadError, setUploadError] = useState("");
-
-  // Submit states
-  const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [logoFile, setLogoFile] = useState(null);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // ✅ Upload logo after we have token
-  const handleLogoChange = async (e) => {
+  const handleLogoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadError("");
-    setUploadedLogo(null);
-
-    // preview instantly
+    setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
-
-    try {
-      setUploadingLogo(true);
-
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setUploadError("Please register first, then upload logo ✅");
-        return;
-      }
-
-      const data = await uploadEmployerLogoApi({ file, token });
-
-      setUploadedLogo(data.companyLogo);
-    } catch (err) {
-      setUploadError(err?.response?.data?.message || "Logo upload failed");
-    } finally {
-      setUploadingLogo(false);
-    }
-  };
-
-  const resetMessages = () => {
-    setErrorMsg("");
-    setSuccessMsg("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    resetMessages();
 
-    try {
-      setLoading(true);
+    const formData = new FormData();
 
-      // ✅ 1) Register user (role=employer)
-      const registerPayload = {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: "employer",
-      };
+    formData.append("name", form.name);
+    formData.append("email", form.email);
+    formData.append("password", form.password);
 
-      const registerRes = await registerEmployerApi({
-        payload: registerPayload,
-      });
+    formData.append("companyName", form.companyName);
+    formData.append("companyWebsite", form.companyWebsite);
+    formData.append("companyDescription", form.companyDescription);
+    formData.append("location", form.location);
+    formData.append("industry", form.industry);
 
-      // ✅ Save token
-      if (registerRes?.token) {
-        localStorage.setItem("token", registerRes.token);
-      }
-
-      // ✅ 2) Create employer profile (optional)
-      // If your backend auto-creates employer profile, remove this.
-      const token = registerRes?.token || localStorage.getItem("token");
-
-      const employerPayload = {
-        companyName: form.companyName,
-        companyWebsite: form.companyWebsite,
-        companyDescription: form.companyDescription,
-        location: form.location,
-        industry: form.industry,
-      };
-
-      // optional call (depends on your backend)
-      await createEmployerProfileApi({
-        payload: employerPayload,
-        token,
-      });
-
-      setSuccessMsg("Employer registered successfully ✅ Now upload logo!");
-    } catch (err) {
-      setErrorMsg(
-        err?.response?.data?.message || "Employer registration failed"
-      );
-    } finally {
-      setLoading(false);
+    if (logoFile) {
+      formData.append("companyLogo", logoFile);
     }
+
+    await registerEmployerProfile(formData);
   };
 
   return (
@@ -179,21 +110,6 @@ const EmployerRegister = () => {
               faster.
             </p>
           </div>
-
-          {/* Messages */}
-          {successMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-2 font-bold">
-              <CheckCircle2 size={18} />
-              {successMsg}
-            </div>
-          )}
-
-          {errorMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center gap-2 font-bold">
-              <XCircle size={18} />
-              {errorMsg}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Grid */}
@@ -269,6 +185,7 @@ const EmployerRegister = () => {
                     onChange={handleChange}
                     placeholder="e.g. Infosys"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -287,6 +204,7 @@ const EmployerRegister = () => {
                     onChange={handleChange}
                     placeholder="https://company.com"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -305,6 +223,7 @@ const EmployerRegister = () => {
                     onChange={handleChange}
                     placeholder="Delhi / Remote"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -323,6 +242,7 @@ const EmployerRegister = () => {
                     onChange={handleChange}
                     placeholder="IT / Finance"
                     className="w-full bg-transparent outline-none font-medium"
+                    required
                   />
                 </div>
               </div>
@@ -339,10 +259,11 @@ const EmployerRegister = () => {
                 onChange={handleChange}
                 placeholder="Write something about your company..."
                 className="mt-2 w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none font-medium focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                required
               />
             </div>
 
-            {/* ✅ Big Beautiful Logo Upload */}
+            {/* Logo Upload */}
             <div>
               <label className="text-sm font-bold text-slate-700">
                 Company Logo
@@ -363,7 +284,6 @@ const EmployerRegister = () => {
                     )}
                   </div>
 
-                  {/* Upload Content */}
                   <div className="flex-1 w-full text-center md:text-left">
                     <h4 className="text-lg font-extrabold text-slate-900">
                       Upload your company logo
@@ -374,24 +294,13 @@ const EmployerRegister = () => {
 
                     <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                       <label className="cursor-pointer inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 transition-all">
-                        {uploadingLogo ? (
-                          <>
-                            <Loader2 className="animate-spin" size={18} />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <UploadCloud size={18} />
-                            Choose & Upload
-                          </>
-                        )}
-
+                        <UploadCloud size={18} />
+                        Choose Logo
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
                           onChange={handleLogoChange}
-                          disabled={uploadingLogo}
                         />
                       </label>
 
@@ -400,8 +309,7 @@ const EmployerRegister = () => {
                           type="button"
                           onClick={() => {
                             setLogoPreview(null);
-                            setUploadedLogo(null);
-                            setUploadError("");
+                            setLogoFile(null);
                           }}
                           className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold border border-slate-200 bg-white hover:bg-slate-50 transition-all"
                         >
@@ -410,28 +318,12 @@ const EmployerRegister = () => {
                       )}
                     </div>
 
-                    {/* Upload Status */}
-                    <div className="mt-4">
-                      {uploadedLogo?.url && !uploadingLogo && (
-                        <p className="text-sm font-bold text-emerald-600 flex items-center gap-2">
-                          <CheckCircle2 size={16} />
-                          Logo uploaded successfully ✅
-                        </p>
-                      )}
-
-                      {uploadError && (
-                        <p className="text-sm font-bold text-red-500 flex items-center gap-2">
-                          <XCircle size={16} />
-                          {uploadError}
-                        </p>
-                      )}
-
-                      {!localStorage.getItem("token") && (
-                        <p className="text-xs text-slate-500 mt-2">
-                          ⚠️ Register first, then upload logo (token required).
-                        </p>
-                      )}
-                    </div>
+                    {logoPreview && (
+                      <p className="text-sm font-bold text-emerald-600 flex items-center gap-2 mt-4">
+                        <CheckCircle2 size={16} />
+                        Logo selected ✅ (will upload on register)
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

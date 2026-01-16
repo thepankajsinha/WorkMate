@@ -9,29 +9,15 @@ import {
   Briefcase,
   UploadCloud,
   ArrowRight,
-  CheckCircle2,
-  XCircle,
   Loader2,
   FileText,
+  CheckCircle2,
 } from "lucide-react";
-
-// ✅ Later you can connect backend like:
-// import { updateEmployerProfileApi, uploadEmployerLogoApi } from "../../api/employerApi";
+import { useEmployer } from "../../context/EmployerContext";
 
 const UpdateEmployerProfile = () => {
-  // ✅ Dummy existing employer data (replace with API GET employer later)
-  const dummyEmployer = {
-    companyName: "HireMind Technologies",
-    companyWebsite: "https://hiremind.com",
-    companyDescription:
-      "We build modern hiring tools for job seekers and employers. We focus on clean UI, fast performance and AI-based matching.",
-    location: "Delhi / Remote",
-    industry: "IT / Software",
-    companyLogo: {
-      url: "https://ui-avatars.com/api/?name=HireMind&background=0148D6&color=fff",
-      key: "dummy_key",
-    },
-  };
+  const { employer, loading, fetchEmployerProfile, updateEmployerProfile } =
+    useEmployer();
 
   const [form, setForm] = useState({
     companyName: "",
@@ -41,126 +27,70 @@ const UpdateEmployerProfile = () => {
     industry: "",
   });
 
-  // ✅ Logo states
+  // ✅ only for UI preview + file upload
   const [logoPreview, setLogoPreview] = useState(null);
-  const [uploadedLogo, setUploadedLogo] = useState(null); // { url, key }
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadError, setUploadError] = useState("");
+  const [logoFile, setLogoFile] = useState(null);
 
-  // ✅ Submit states
-  const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // ✅ Prefill form on page load
+  // ✅ Load employer profile if not available
   useEffect(() => {
+    if (!employer) fetchEmployerProfile();
+  }, []);
+
+  // ✅ Prefill form when employer is available
+  useEffect(() => {
+    if (!employer) return;
+
     setForm({
-      companyName: dummyEmployer.companyName || "",
-      companyWebsite: dummyEmployer.companyWebsite || "",
-      companyDescription: dummyEmployer.companyDescription || "",
-      location: dummyEmployer.location || "",
-      industry: dummyEmployer.industry || "",
+      companyName: employer.companyName || "",
+      companyWebsite: employer.companyWebsite || "",
+      companyDescription: employer.companyDescription || "",
+      location: employer.location || "",
+      industry: employer.industry || "",
     });
 
-    setUploadedLogo(dummyEmployer.companyLogo || null);
-    setLogoPreview(dummyEmployer.companyLogo?.url || null);
-  }, []);
+    setLogoPreview(employer.companyLogo?.url || null);
+  }, [employer]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const resetMessages = () => {
-    setErrorMsg("");
-    setSuccessMsg("");
-  };
-
-  // ✅ Upload logo (frontend ready)
-  const handleLogoChange = async (e) => {
+  const handleLogoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadError("");
-    setUploadedLogo(null);
-
-    // preview instantly
+    setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
-
-    try {
-      setUploadingLogo(true);
-
-      const token = localStorage.getItem("token");
-
-      // ✅ If no backend yet, just simulate success
-      if (!token) {
-        setUploadError("Token missing ❌ (Login required to upload)");
-        return;
-      }
-
-      // ✅ Later connect your real API:
-      // const data = await uploadEmployerLogoApi({ file, token });
-      // setUploadedLogo(data.companyLogo);
-
-      // ✅ Fake upload success (for UI testing)
-      await new Promise((r) => setTimeout(r, 900));
-      setUploadedLogo({
-        url: URL.createObjectURL(file),
-        key: "fake_uploaded_logo_key",
-      });
-
-      setSuccessMsg("Company logo uploaded successfully ✅");
-    } catch (err) {
-      setUploadError(err?.response?.data?.message || "Logo upload failed");
-    } finally {
-      setUploadingLogo(false);
-    }
   };
 
-  // ✅ Update profile submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    resetMessages();
 
-    try {
-      setLoading(true);
+    const formData = new FormData();
 
-      const token = localStorage.getItem("token");
+    formData.append("companyName", form.companyName);
+    formData.append("companyWebsite", form.companyWebsite);
+    formData.append("companyDescription", form.companyDescription);
+    formData.append("location", form.location);
+    formData.append("industry", form.industry);
 
-      if (!token) {
-        setErrorMsg("Token missing ❌ Please login first.");
-        return;
-      }
-
-      const payload = {
-        ...form,
-        companyLogo: uploadedLogo, // ✅ include uploaded logo if available
-      };
-
-      console.log("✅ UPDATE EMPLOYER PAYLOAD:", payload);
-
-      // ✅ Later connect real API:
-      // await updateEmployerProfileApi({ payload, token });
-
-      // ✅ Fake delay
-      await new Promise((r) => setTimeout(r, 900));
-
-      setSuccessMsg("Employer profile updated successfully ✅");
-    } catch (err) {
-      setErrorMsg(err?.response?.data?.message || "Update failed ❌");
-    } finally {
-      setLoading(false);
+    // ✅ must match multer field name: upload.single("companyLogo")
+    if (logoFile) {
+      formData.append("companyLogo", logoFile);
     }
+
+    await updateEmployerProfile(formData);
   };
 
   return (
     <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden relative">
-      {/* ✅ Background Decorative Elements */}
+      {/* Background Decorative Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl" />
       </div>
 
-      {/* ✅ Header */}
+      {/* Header */}
       <header className="w-full px-4 pt-10 pb-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -177,7 +107,7 @@ const UpdateEmployerProfile = () => {
         </div>
       </header>
 
-      {/* ✅ Form */}
+      {/* Form */}
       <main className="px-4 pb-20 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -194,23 +124,8 @@ const UpdateEmployerProfile = () => {
             </p>
           </div>
 
-          {/* ✅ Messages */}
-          {successMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-2 font-bold">
-              <CheckCircle2 size={18} />
-              {successMsg}
-            </div>
-          )}
-
-          {errorMsg && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center gap-2 font-bold">
-              <XCircle size={18} />
-              {errorMsg}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* ✅ Grid */}
+            {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Company Name */}
               <div>
@@ -303,7 +218,7 @@ const UpdateEmployerProfile = () => {
               </div>
             </div>
 
-            {/* ✅ Logo Upload */}
+            {/* Logo Upload */}
             <div>
               <label className="text-sm font-bold text-slate-700">
                 Company Logo
@@ -324,7 +239,6 @@ const UpdateEmployerProfile = () => {
                     )}
                   </div>
 
-                  {/* Upload Content */}
                   <div className="flex-1 w-full text-center md:text-left">
                     <h4 className="text-lg font-extrabold text-slate-900">
                       Change your company logo
@@ -335,24 +249,13 @@ const UpdateEmployerProfile = () => {
 
                     <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                       <label className="cursor-pointer inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 transition-all">
-                        {uploadingLogo ? (
-                          <>
-                            <Loader2 className="animate-spin" size={18} />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <UploadCloud size={18} />
-                            Choose & Upload
-                          </>
-                        )}
-
+                        <UploadCloud size={18} />
+                        Choose Logo
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
                           onChange={handleLogoChange}
-                          disabled={uploadingLogo}
                         />
                       </label>
 
@@ -360,39 +263,28 @@ const UpdateEmployerProfile = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            setLogoPreview(null);
-                            setUploadedLogo(null);
-                            setUploadError("");
+                            setLogoPreview(employer?.companyLogo?.url || null);
+                            setLogoFile(null);
                           }}
                           className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold border border-slate-200 bg-white hover:bg-slate-50 transition-all"
                         >
-                          Remove
+                          Reset
                         </button>
                       )}
                     </div>
 
-                    {/* Upload Status */}
-                    <div className="mt-4">
-                      {uploadedLogo?.url && !uploadingLogo && (
-                        <p className="text-sm font-bold text-emerald-600 flex items-center gap-2">
-                          <CheckCircle2 size={16} />
-                          Logo ready ✅
-                        </p>
-                      )}
-
-                      {uploadError && (
-                        <p className="text-sm font-bold text-red-500 flex items-center gap-2">
-                          <XCircle size={16} />
-                          {uploadError}
-                        </p>
-                      )}
-                    </div>
+                    {logoFile && (
+                      <p className="text-sm font-bold text-emerald-600 flex items-center gap-2 mt-4">
+                        <CheckCircle2 size={16} />
+                        New logo selected
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ✅ Submit */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}

@@ -1,59 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Brain,
   Zap,
   User,
-  Mail,
-  MapPin,
-  FileText,
   Download,
   BadgeCheck,
   Eye,
   XCircle,
   CheckCircle2,
   Clock3,
+  Loader2,
+  Briefcase,
+  FileText,
 } from "lucide-react";
 
-const ViewApplicants = () => {
-  // ✅ Dummy Applicants
-  const [applicants, setApplicants] = useState([
-    {
-      id: "app_1",
-      name: "Pankaj Sinha",
-      email: "pankaj@gmail.com",
-      location: "Delhi",
-      appliedAt: "2026-01-13",
-      status: "Under Review",
-      resumeUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    },
-    {
-      id: "app_2",
-      name: "Rahul Sharma",
-      email: "rahul@gmail.com",
-      location: "Noida",
-      appliedAt: "2026-01-12",
-      status: "Shortlisted",
-      resumeUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    },
-    {
-      id: "app_3",
-      name: "Aman Verma",
-      email: "aman@gmail.com",
-      location: "Bangalore",
-      appliedAt: "2026-01-11",
-      status: "Rejected",
-      resumeUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    },
-  ]);
+import { useApplicant } from "../../context/ApplicantContext";
 
-  const updateStatus = (id, status) => {
-    setApplicants((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status } : a))
-    );
+const ViewApplicants = () => {
+  const {
+    loading,
+    applicants,
+    getApplicantsForEmployer,
+    updateApplicantStatus,
+  } = useApplicant();
+
+  useEffect(() => {
+    getApplicantsForEmployer();
+  }, []);
+
+  // ✅ "2 days ago" like format
+  const timeAgo = (dateValue) => {
+    if (!dateValue) return "";
+
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return "";
+
+    const diffMs = Date.now() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) return "Applied today";
+    if (diffDays === 1) return "Applied yesterday";
+    return `Applied ${diffDays} days ago`;
   };
 
   const statusBadge = (status) => {
@@ -102,9 +91,13 @@ const ViewApplicants = () => {
 
     return (
       <span className={`${base} bg-slate-50 border-slate-200 text-slate-700`}>
-        {status}
+        {status || "Applied"}
       </span>
     );
+  };
+
+  const handleStatusChange = async (applicationId, status) => {
+    await updateApplicantStatus({ applicationId, status });
   };
 
   return (
@@ -145,88 +138,141 @@ const ViewApplicants = () => {
               View <span className="text-blue-600">Applicants</span>
             </h1>
             <p className="text-slate-500 mt-3 max-w-xl mx-auto">
-              Review candidates, download resumes and update statuses.
+              Review candidates, open resumes and update statuses.
             </p>
           </div>
 
+          {/* ✅ Loading */}
+          {loading && (
+            <div className="flex justify-center items-center gap-2 py-6 text-slate-600 font-bold">
+              <Loader2 className="animate-spin" size={18} />
+              Loading applicants...
+            </div>
+          )}
+
+          {/* ✅ Empty */}
+          {!loading && applicants.length === 0 && (
+            <div className="text-center bg-white border border-slate-100 rounded-3xl p-10 shadow-xl shadow-blue-900/5">
+              <p className="text-slate-700 font-black text-lg">
+                No applicants yet 😅
+              </p>
+              <p className="text-slate-500 mt-2">
+                Once jobseekers apply, you will see them here.
+              </p>
+            </div>
+          )}
+
           {/* Applicants list */}
-          <div className="space-y-4">
-            {applicants.map((app) => (
-              <div
-                key={app.id}
-                className="bg-white border border-slate-100 rounded-3xl p-5 md:p-6 shadow-xl shadow-blue-900/5 hover:shadow-2xl transition-all"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                  {/* Left */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700">
-                      <User size={22} />
-                    </div>
+          {!loading && applicants.length > 0 && (
+            <div className="space-y-4">
+              {applicants.map((app) => {
+                // ✅ Expected structure from backend:
+                // app = application document
+                // app.job, app.jobSeeker, app.resume.url, app.status, app.createdAt
 
-                    <div>
-                      <h3 className="text-lg md:text-xl font-black text-slate-900">
-                        {app.name}
-                      </h3>
+                const jobTitle = app?.job?.title || "Job";
+                const jobSeekerName =
+                  app?.jobSeeker?.name || app?.jobSeeker?.user?.name || "User";
+                const resumeUrl = app?.resume?.url || app?.resumeUrl || "";
+                const appliedTime = timeAgo(app?.createdAt);
+                const status = app?.status || "Under Review";
 
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <span className="px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold flex items-center gap-2">
-                          <Mail size={16} className="text-blue-600" />
-                          {app.email}
-                        </span>
+                const jobSeekerId = app?.jobSeeker?._id || app?.jobSeeker?.id;
 
-                        <span className="px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold flex items-center gap-2">
-                          <MapPin size={16} className="text-blue-600" />
-                          {app.location}
-                        </span>
+                return (
+                  <div
+                    key={app._id}
+                    className="bg-white border border-slate-100 rounded-3xl p-5 md:p-6 shadow-xl shadow-blue-900/5 hover:shadow-2xl transition-all"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                      {/* Left */}
+                      <div className="flex items-start gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+                          <User size={22} />
+                        </div>
 
-                        <span className="px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-500 text-sm font-bold flex items-center gap-2">
-                          <Clock3 size={16} className="text-blue-600" />
-                          {app.appliedAt}
-                        </span>
+                        <div>
+                          <h3 className="text-lg md:text-xl font-black text-slate-900">
+                            {jobSeekerName}
+                          </h3>
 
-                        {/* Status badge */}
-                        {statusBadge(app.status)}
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {/* ✅ Job Title */}
+                            <span className="px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold flex items-center gap-2">
+                              <Briefcase size={16} className="text-blue-600" />
+                              {jobTitle}
+                            </span>
+
+                            {/* ✅ Applied time */}
+                            <span className="px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-500 text-sm font-bold flex items-center gap-2">
+                              <Clock3 size={16} className="text-blue-600" />
+                              {appliedTime || "Applied"}
+                            </span>
+
+                            {/* ✅ Status */}
+                            {statusBadge(status)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right */}
+                      <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                        {/* ✅ Resume */}
+                        <a
+                          href={resumeUrl || "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all
+                            ${
+                              resumeUrl
+                                ? "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                                : "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
+                            }`}
+                        >
+                          <Download size={18} className="text-blue-600" />
+                          Resume
+                        </a>
+
+                        {/* ✅ Status Dropdown */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+                          <select
+                            value={status}
+                            onChange={(e) =>
+                              handleStatusChange(app._id, e.target.value)
+                            }
+                            className="bg-transparent outline-none font-bold text-slate-700"
+                          >
+                            <option>Under Review</option>
+                            <option>Shortlisted</option>
+                            <option>Rejected</option>
+                            <option>Selected</option>
+                          </select>
+                        </div>
+
+                        {/* ✅ View JobSeeker Profile */}
+                        <Link
+                          to={
+                            jobSeekerId
+                              ? `/jobseeker/public/${jobSeekerId}`
+                              : "#"
+                          }
+                          className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-lg
+                            ${
+                              jobSeekerId
+                                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
+                                : "bg-slate-100 text-slate-400 cursor-not-allowed pointer-events-none"
+                            }`}
+                        >
+                          <FileText size={18} />
+                          View
+                        </Link>
                       </div>
                     </div>
                   </div>
-
-                  {/* Right */}
-                  <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                    {/* Download Resume */}
-                    <a
-                      href={app.resumeUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all"
-                    >
-                      <Download size={18} className="text-blue-600" />
-                      Resume
-                    </a>
-
-                    {/* Status Dropdown */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
-                      <select
-                        value={app.status}
-                        onChange={(e) => updateStatus(app.id, e.target.value)}
-                        className="bg-transparent outline-none font-bold text-slate-700"
-                      >
-                        <option>Under Review</option>
-                        <option>Shortlisted</option>
-                        <option>Rejected</option>
-                        <option>Selected</option>
-                      </select>
-                    </div>
-
-                    {/* View Profile (dummy) */}
-                    <button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
-                      <FileText size={18} />
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
       </main>
     </div>

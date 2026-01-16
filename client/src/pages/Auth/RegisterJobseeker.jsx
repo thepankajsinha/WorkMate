@@ -10,26 +10,26 @@ import {
   UploadCloud,
   ArrowRight,
   BadgeCheck,
-  X,
   Image as ImageIcon,
   Plus,
   Trash2,
   GraduationCap,
   Building2,
   Calendar,
+  Loader2,
 } from "lucide-react";
+import { useJobSeeker } from "../../context/JobSeekerContext";
 
 const JobSeekerRegister = () => {
+  const { registerJobSeekerProfile, loading } = useJobSeeker(); // ✅ context
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     bio: "",
+    skills: "", // ✅ comma separated string
   });
-
-  // ✅ Skills input
-  const [skillInput, setSkillInput] = useState("");
-  const [skills, setSkills] = useState([]);
 
   // ✅ Resume file
   const [resumeFile, setResumeFile] = useState(null);
@@ -64,31 +64,6 @@ const JobSeekerRegister = () => {
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  // ✅ Skills Add
-  const addSkill = () => {
-    const val = skillInput.trim().toLowerCase();
-    if (!val) return;
-
-    if (skills.includes(val)) {
-      setSkillInput("");
-      return;
-    }
-
-    setSkills((prev) => [...prev, val]);
-    setSkillInput("");
-  };
-
-  const handleSkillKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addSkill();
-    }
-  };
-
-  const removeSkill = (skill) => {
-    setSkills((prev) => prev.filter((s) => s !== skill));
   };
 
   // ✅ Resume select
@@ -173,38 +148,54 @@ const JobSeekerRegister = () => {
     );
   };
 
-  // ✅ Submit
+  // ✅ Submit (Context Integrated)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      ...form,
-      role: "jobseeker",
-      skills,
-
-      education: education.map((e) => ({
+    // ✅ Clean education
+    const cleanedEducation = education
+      .filter((e) => e.institution || e.degree || e.fieldOfStudy)
+      .map((e) => ({
         ...e,
         startYear: e.startYear ? Number(e.startYear) : null,
         endYear: e.isCurrent ? null : e.endYear ? Number(e.endYear) : null,
-      })),
+      }));
 
-      experience: experience.map((x) => ({
+    // ✅ Clean experience
+    const cleanedExperience = experience
+      .filter((x) => x.company || x.position || x.description)
+      .map((x) => ({
         ...x,
         startDate: x.startDate ? new Date(x.startDate) : null,
         endDate: x.isCurrent ? null : x.endDate ? new Date(x.endDate) : null,
-      })),
-    };
+      }));
 
-    console.log("JobSeeker Register Payload:", payload);
-    console.log("Resume File:", resumeFile);
-    console.log("Profile Image:", profileImage);
+    // ✅ FormData (because backend expects multipart/form-data)
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("email", form.email);
+    formData.append("password", form.password);
+    formData.append("bio", form.bio);
 
-    alert("✅ Jobseeker register payload ready (connect API next)");
+    // ✅ Skills as comma-separated string
+    // Example: "react, nodejs, mongo"
+    formData.append("skills", form.skills);
+
+    // ✅ education + experience as JSON string
+    formData.append("education", JSON.stringify(cleanedEducation));
+    formData.append("experience", JSON.stringify(cleanedExperience));
+
+    // ✅ files
+    if (resumeFile) formData.append("resume", resumeFile);
+    if (profileImage) formData.append("profilePicture", profileImage);
+
+    // ✅ Call context API
+    await registerJobSeekerProfile(formData);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-slate-900 overflow-x-hidden relative">
-      {/* ✅ Blue Gradient Decorative Elements */}
+      {/* ✅ Background */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-3xl" />
         <div className="absolute top-40 right-[-120px] w-[520px] h-[520px] bg-indigo-400/20 rounded-full blur-3xl" />
@@ -320,53 +311,28 @@ const JobSeekerRegister = () => {
               </p>
             </div>
 
-            {/* Skills */}
+            {/* ✅ Skills (comma separated string) */}
             <div>
               <label className="text-sm font-bold text-slate-700">
-                Skills (Add Multiple)
+                Skills (comma separated)
               </label>
 
-              <div className="mt-2 flex flex-col md:flex-row gap-3">
-                <div className="flex-1 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500">
-                  <BadgeCheck size={18} className="text-blue-600" />
-                  <input
-                    type="text"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={handleSkillKeyDown}
-                    placeholder="e.g. React, Node.js, MongoDB"
-                    className="w-full bg-transparent outline-none font-medium"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addSkill}
-                  className="px-6 py-3 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all"
-                >
-                  Add Skill
-                </button>
+              <div className="mt-2 flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500">
+                <BadgeCheck size={18} className="text-blue-600" />
+                <input
+                  type="text"
+                  name="skills"
+                  value={form.skills}
+                  onChange={handleChange}
+                  placeholder="Enter skills comma separated (React, Node.js, MongoDB)"
+                  className="w-full bg-transparent outline-none font-medium"
+                />
               </div>
 
-              {skills.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-bold"
-                    >
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="hover:text-red-500 transition-colors"
-                      >
-                        <X size={16} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
+              <p className="text-xs text-slate-400 mt-2 font-semibold">
+                Example:{" "}
+                <span className="font-bold">react, nodejs, mongodb</span>
+              </p>
             </div>
 
             {/* ✅ Education */}
@@ -605,7 +571,7 @@ const JobSeekerRegister = () => {
                       Upload your resume
                     </h4>
                     <p className="text-sm text-slate-500 mt-1">
-                      PDF supported. Recruiters love well-formatted resumes.
+                      PDF supported.
                     </p>
 
                     <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
@@ -665,9 +631,6 @@ const JobSeekerRegister = () => {
                     <h4 className="text-lg font-extrabold text-slate-900">
                       Upload a profile photo
                     </h4>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Optional — helps your profile look more professional.
-                    </p>
 
                     <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                       <label className="cursor-pointer inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold transition-all">
@@ -699,12 +662,22 @@ const JobSeekerRegister = () => {
               </div>
             </div>
 
-            {/* Submit */}
+            {/* ✅ Submit */}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-semibold text-lg transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-semibold text-lg transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              Register Jobseeker <ArrowRight size={20} />
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  Registering...
+                </>
+              ) : (
+                <>
+                  Register Jobseeker <ArrowRight size={20} />
+                </>
+              )}
             </button>
           </form>
         </motion.div>

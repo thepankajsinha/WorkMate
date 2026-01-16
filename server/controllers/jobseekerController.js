@@ -237,7 +237,7 @@ export const updateJobSeeker = async (req, res) => {
 export const getJobSeeker = async (req, res) => {
   try {
 
-    const jobSeeker = await JobSeeker.findOne({ user: req.user._id });
+    const jobSeeker = await JobSeeker.findOne({ user: req.user._id }).populate("user");
 
     if (!jobSeeker) {
       return res.status(404).json({ message: "JobSeeker profile not found" });

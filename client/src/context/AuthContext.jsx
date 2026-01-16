@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { toast } from "react-toastify";
@@ -11,10 +11,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch logged-in user's profile
   const fetchProfile = async () => {
     try {
-      const res = await api.get("/api/users/profile");
+      const res = await api.get("/api/auth/me");
       setUser(res.data.user);
     } catch (error) {
       setUser(null);
@@ -27,68 +26,65 @@ export const AuthProvider = ({ children }) => {
     fetchProfile();
   }, []);
 
-  const register = async ({ name, email, password, role }) => {
-    try {
-      const res = await api.post("/api/users/register", {
-        name,
-        email,
-        password,
-        role,
-      });
-
-      if (res.status == 201) {
-        toast.success(res.data.message);
-        navigate("/login");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
-    }
-  };
-
   const login = async ({ email, password }) => {
     try {
-      const res = await api.post("/api/users/login", {
-        email,
-        password,
-      });
+      const res = await api.post("/api/auth/login", { email, password });
 
       if (res.status === 200) {
-        const user = res.data.user;
-        setUser(user);
-        toast.success(res.data.message);
-
-        // Redirect based on role
-        if (user.role === "employer") {
-          navigate("/employer");
-        } else {
-          navigate("/jobseeker/profile");
-        }
+        setUser(res.data.user);
+        toast.success(res.data.message || "Login successful ✅");
+        navigate("/");
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
-      const res = await api.post("/api/users/logout");
+      const res = await api.post("/api/auth/logout");
 
-      if (res.status == 200) {
+      if (res.status === 200) {
         setUser(null);
-        toast.success(res.data.message);
+        toast.success(res.data.message || "Logout successful ✅");
         navigate("/login");
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Logout failed");
+      throw error;
+    }
+  };
+
+  const updateProfile = async ({ name, email, oldPassword, newPassword }) => {
+    try {
+      const res = await api.put("/api/auth/update", {
+        name,
+        email,
+        oldPassword,
+        newPassword,
+      });
+
+      if (res.status === 200) {
+        setUser(res.data.user);
+        toast.success(res.data.message || "Profile updated ✅");
+      }
+
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Profile update failed");
+      throw error;
     }
   };
 
   const value = {
     user,
     loading,
-    register,
     login,
     logout,
+    fetchProfile,
+    updateProfile,
+    setUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

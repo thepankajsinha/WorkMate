@@ -18,7 +18,10 @@ const applicantSchema = new mongoose.Schema(
       default: "Applied",
     },
     coverLetter: String,
-    resume: String,
+    resume: {
+      key : String,
+      url : String
+    },
   },
   { timestamps: true }
 );

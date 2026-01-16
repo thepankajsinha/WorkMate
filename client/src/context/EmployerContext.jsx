@@ -1,13 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export const EmployerContext = createContext();
 
 export const EmployerProvider = ({ children }) => {
   const [employer, setEmployer] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
 
   const fetchEmployerProfile = async () => {
     try {
@@ -24,22 +25,24 @@ export const EmployerProvider = ({ children }) => {
     fetchEmployerProfile();
   }, []);
 
-
-  const createEmployerProfile = async (formData) => {
+  const registerEmployerProfile = async (formData) => {
     try {
-      const res = await api.post("/api/employers/create", formData, {
+      const res = await api.post("/api/employers/register", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (res.status === 201) {
         toast.success(res.data.message);
         setEmployer(res.data.employer);
+        navigate("/login");
       }
+
+      return res.data;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create profile");
+      toast.error(error.response?.data?.message || "Registration failed");
+      throw error;
     }
   };
-
 
   const updateEmployerProfile = async (formData) => {
     try {
@@ -51,17 +54,20 @@ export const EmployerProvider = ({ children }) => {
         toast.success(res.data.message);
         setEmployer(res.data.employer);
       }
+
+      return res.data;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || "Update failed");
+      throw error;
     }
   };
 
   const value = {
     employer,
     loading,
-    createEmployerProfile,
-    updateEmployerProfile,
     fetchEmployerProfile,
+    registerEmployerProfile,
+    updateEmployerProfile,
   };
 
   return (

@@ -3,7 +3,6 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/Home/HomePage";
 import LoginPage from "./pages/Auth/LoginPage";
-import SignupPage from "./pages/Auth/SignupPage";
 import JobDetailsPage from "./pages/Jobs/JobDetailsPage";
 import PageNotFound from "./pages/PageNotFound";
 import SavedJobs from "./pages/JobSeeker/SavedJobs";
@@ -11,23 +10,21 @@ import AppliedJobs from "./pages/JobSeeker/AppliedJobs";
 import PostJob from "./pages/Employer/PostJob";
 import ManageJobs from "./pages/Employer/ManageJobs";
 import ViewApplicants from "./pages/Employer/ViewApplicants";
-
-import { useAuth } from "./context/AuthContext";
 import UpdateProfile from "./pages/JobSeeker/UpdateProfile";
 import ViewProfile from "./pages/JobSeeker/ViewProfile";
 import RegisterEmployer from "./pages/Auth/RegisterEmployer";
 import JobSeekerRegister from "./pages/Auth/RegisterJobseeker";
 import JobListingPage from "./pages/Jobs/JobListingPage";
 import UpdateEmployerProfile from "./pages/Employer/UpdateEmployerProfile";
-import CompanyProfile from "./pages/Employer/CompanyProfile";
+import EmployerProfile from "./pages/Employer/EmployerProfile";
+
+import { useAuth } from "./context/AuthContext";
 
 function App() {
   const { user, loading } = useAuth();
 
-  // const isEmployer = user?.role === "employer";
-  // const isJobSeeker = user?.role === "jobseeker";
-  const isJobSeeker = true; // For testing purposes, assume all authenticated users are jobseekers
-  const isEmployer = true; // For testing purposes, assume all authenticated users are employers
+  const isEmployer = user?.role === "employer";
+  const isJobSeeker = user?.role === "jobseeker";
 
   return (
     <>
@@ -45,15 +42,13 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobListingPage />} />
           <Route path="/jobs/:id" element={<JobDetailsPage />} />
+          <Route path="/company/:id" element={<EmployerProfile />} />
+
 
           {/* Auth Routes */}
           <Route
             path="/login"
             element={user ? <Navigate to={"/"} /> : <LoginPage />}
-          />
-          <Route
-            path="/signup"
-            element={user ? <Navigate to={"/"} /> : <SignupPage />}
           />
           <Route
             path="/register-employer"
@@ -71,7 +66,6 @@ function App() {
                 path="/employer/update-profile"
                 element={<UpdateEmployerProfile />}
               />
-              <Route path="/company/:id" element={<CompanyProfile />} />
 
               <Route path="/employer/post-job" element={<PostJob />} />
               <Route path="/employer/manage-jobs" element={<ManageJobs />} />
