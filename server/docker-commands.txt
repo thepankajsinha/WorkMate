@@ -1,17 +1,37 @@
-1. show running container - docker ps
+-check docker version - docker --version
 
-2. Show all containers (running + stopped) - docker ps -a
 
-3. build backend image -> docker build -t WorkMate . 
-here WorkMate is image name
+Image commands:
 
-4. Run image in container -
-docker run -d -p 5000:5000 --name job-backend --env-file .env WorkMate
+-show all images - docker images
+-remove all images - docker image prune
+-remove specific image - docker rmi image_name/image id
+-build backend image -> docker build -t image_name .
 
-here job-backend is container name and WorkMate is image name
 
-5. stop container - docker stop job-backend
+Container commands:
 
-6. remove container - docker stop job-backend
+-show running container - docker ps
+-Show all containers (running + stopped) - docker ps -a
+-Run image in container - docker run -d -p HOST_PORT:CONTAINER_PORT --name container_name --env-file .env image_name
+-remove container - docker rm container_id 
+-stop container - docker stop container_id
+-start container - docker start container_id
+-restart container - docker restart container_id
 
-7. restart container - docker restart job-backend
+
+How to push images on docker hub
+-step:1 docker login
+-step:2 cd backend/frontend
+-step:3 docker build -t image_name .
+-step:4 docker tag image_name:latest YOUR_USERNAME/image_name:latest
+-step:5 docker push YOUR_USERNAME/image_name:latest
+
+
+How to use docker compose
+-start container - docker compose up -d
+-stop and remove container - docker compose down
+-show running container - docker compose ps
+-restart container - docker compose restart
+
+
