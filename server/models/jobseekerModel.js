@@ -50,8 +50,13 @@ const jobSeekerSchema = new mongoose.Schema(
         isCurrent: { type: Boolean, default: false },
       },
     ],
+    aiUsage: {
+      resumeAnalysisCount: { type: Number, default: 1 }, // 1/day
+      jobMatchCount: { type: Number, default: 1 }, // 1/day
+      lastResetDate: { type: String, default: "" }, // YYYY-MM-DD
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("JobSeeker", jobSeekerSchema);
