@@ -16,12 +16,13 @@ import RegisterEmployer from "./pages/Auth/RegisterEmployer";
 import JobSeekerRegister from "./pages/Auth/RegisterJobseeker";
 import JobListingPage from "./pages/Jobs/JobListingPage";
 import UpdateEmployerProfile from "./pages/Employer/UpdateEmployerProfile";
-import EmployerProfile from "./pages/Employer/EmployerPublicProfile";
 
 import { useAuth } from "./context/AuthContext";
 import JobseekerPublicProfile from "./pages/JobSeeker/JobseekerPublicProfile";
 import EmployerPublicProfile from "./pages/Employer/EmployerPublicProfile";
 import UpdateUser from "./pages/Auth/UpdateUser";
+import ResumeAnalysisPage from "./pages/JobSeeker/ResumeAnalysis";
+import JobMatchPage from "./pages/JobSeeker/JobMatchPage";
 
 function App() {
   const { user, loading } = useAuth();
@@ -31,8 +32,6 @@ function App() {
 
   return (
     <>
-      {}
-
       <Navbar />
 
       <div
@@ -45,39 +44,19 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobListingPage />} />
           <Route path="/jobs/:id" element={<JobDetailsPage />} />
-          <Route
-            path="/jobseeker/public/:jobSeekerId"
-            element={<JobseekerPublicProfile />}
-          />
-          <Route
-            path="/employer/public/:employerId"
-            element={<EmployerPublicProfile />}
-          />
+          <Route path="/jobseeker/public/:jobSeekerId" element={<JobseekerPublicProfile />} />
+          <Route path="/employer/public/:employerId" element={<EmployerPublicProfile />} />
 
           {/* Auth Routes */}
-          <Route
-            path="/login"
-            element={user ? <Navigate to={"/"} /> : <LoginPage />}
-          />
-          <Route
-            path="/register-employer"
-            element={user ? <Navigate to={"/"} /> : <RegisterEmployer />}
-          />
-          <Route
-            path="/register-jobseeker"
-            element={user ? <Navigate to={"/"} /> : <JobSeekerRegister />}
-          />
-
+          <Route path="/login" element={user ? <Navigate to={"/"} /> : <LoginPage />} />
+          <Route path="/register-employer" element={user ? <Navigate to={"/"} /> : <RegisterEmployer />}/>
+          <Route path="/register-jobseeker" element={user ? <Navigate to={"/"} /> : <JobSeekerRegister />} />
           <Route path="/user-update" element={user ? <UpdateUser /> : <Navigate to= {"/login"} />} />
 
           {/* Employer Routes */}
           {isEmployer && (
             <>
-              <Route
-                path="/employer/update-profile"
-                element={<UpdateEmployerProfile />}
-              />
-
+              <Route path="/employer/update-profile" element={<UpdateEmployerProfile />} />
               <Route path="/employer/post-job" element={<PostJob />} />
               <Route path="/employer/manage-jobs" element={<ManageJobs />} />
               <Route path="/employer/applicants" element={<ViewApplicants />} />
@@ -88,12 +67,11 @@ function App() {
           {isJobSeeker && (
             <>
               <Route path="/jobseeker/profile" element={<ViewProfile />} />
-              <Route
-                path="/jobseeker/update-profile"
-                element={<UpdateProfile />}
-              />
+              <Route path="/jobseeker/update-profile" element={<UpdateProfile />}/>
               <Route path="/jobseeker/saved-jobs" element={<SavedJobs />} />
               <Route path="/jobseeker/applied-jobs" element={<AppliedJobs />} />
+              <Route path="/jobseeker/resume-analysis" element={<ResumeAnalysisPage />} />
+              <Route path="/jobseeker/job-match" element={<JobMatchPage />} />
             </>
           )}
 

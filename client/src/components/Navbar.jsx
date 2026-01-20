@@ -15,6 +15,9 @@ import {
   Settings,
   Users,
   Building2,
+  AudioWaveform,
+  BotMessageSquare,
+  UserPen,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -138,7 +141,7 @@ const Navbar = () => {
                       className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     >
                       <Settings size={18} className="opacity-70" />
-                      Update Account
+                      Update User
                     </Link>
 
                     <div className="my-1 border-t border-slate-50" />
@@ -159,8 +162,8 @@ const Navbar = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Settings size={18} className="opacity-70" /> Update
-                          JobSeeker Profile
+                          <UserPen size={18} className="opacity-70" /> Update
+                          Profile
                         </Link>
 
                         <Link
@@ -168,8 +171,8 @@ const Navbar = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Bookmark size={18} className="opacity-70" /> Bookmarked
-                          Jobs
+                          <Bookmark size={18} className="opacity-70" />{" "}
+                          Bookmarked Jobs
                         </Link>
 
                         <Link
@@ -179,6 +182,24 @@ const Navbar = () => {
                         >
                           <Briefcase size={18} className="opacity-70" /> Applied
                           Jobs
+                        </Link>
+
+                        <Link
+                          to="/jobseeker/resume-analysis"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <AudioWaveform size={18} className="opacity-70" /> AI
+                          Resume Analysis
+                        </Link>
+
+                        <Link
+                          to="/jobseeker/job-match"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <BotMessageSquare size={18} className="opacity-70" />{" "}
+                          AI Job match
                         </Link>
                       </>
                     )}
@@ -191,8 +212,7 @@ const Navbar = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Settings size={18} className="opacity-70" /> Update
-                          Employer Profile
+                          <UserPen size={18} className="opacity-70" /> Update Profile
                         </Link>
 
                         <Link
@@ -200,7 +220,8 @@ const Navbar = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Briefcase size={18} className="opacity-70" /> Post a Job
+                          <Briefcase size={18} className="opacity-70" /> Post a
+                          Job
                         </Link>
 
                         <Link
@@ -217,7 +238,8 @@ const Navbar = () => {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
-                          <Users size={18} className="opacity-70" /> View Applicants
+                          <Users size={18} className="opacity-70" /> View
+                          Applicants
                         </Link>
                       </>
                     )}

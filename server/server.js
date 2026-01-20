@@ -17,6 +17,7 @@ import jobRoute from "./routes/jobRoute.js";
 import employerRoute from "./routes/employerRoute.js";
 import bookmarkRoute from "./routes/bookmarkRoute.js";
 import applicantRoute from "./routes/applicantRoute.js";
+import aiRoute from "./routes/aiRoute.js"
 
 
 // Environment variables
@@ -51,6 +52,7 @@ app.use("/api/jobs", jobRoute);
 app.use("/api/employers", employerRoute);
 app.use("/api/bookmarks", bookmarkRoute);
 app.use("/api/applicants", applicantRoute);
+app.use("/api/ai", aiRoute)
 
 
 // start server and connect to DB
