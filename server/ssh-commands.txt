@@ -1,0 +1,14 @@
+-ssh login
+ssh -i key_name.pem ubuntu@server_ip
+
+-clear terminal
+clear
+
+-open file
+cat filen_name
+
+-open and edit
+nano file_name
+
+-save file 
+ctrl + x then press y then press entre
